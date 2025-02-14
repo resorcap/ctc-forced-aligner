@@ -4,10 +4,12 @@ import subprocess
 import unicodedata
 
 import numpy as np
+import uroman as ur
+
 
 from .norm_config import norm_config
 
-UROMAN_PATH = os.path.join(os.path.dirname(__file__), "uroman", "bin")
+uroman = ur.Uroman()
 
 
 def text_normalize(
@@ -147,24 +149,9 @@ def normalize_uroman(text):
 
 def get_uroman_tokens(norm_transcripts, iso=None):
     input_text = "\n".join(norm_transcripts) + "\n"
-
-    assert os.path.exists(os.path.join(UROMAN_PATH, "uroman.pl")), "uroman not found"
-
-    assert not subprocess.call(
-        ["perl", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-    ), (
-        "Please ensure that a valid perl installation exists,"
-        " you can verify by running `perl --version` in your terminal"
-    )
-
-    cmd = ["perl", os.path.join(UROMAN_PATH, "uroman.pl")]
-    if iso in special_isos_uroman:
-        cmd.extend(["-l", iso])
-
-    result = subprocess.run(
-        cmd, input=input_text, text=True, capture_output=True, check=True
-    )
-    output_text = result.stdout
+    if iso not in special_isos_uroman:
+        iso = None
+    output_text = uroman.romanize_string(input_text, lcode=iso)
 
     outtexts = []
     for line in output_text.splitlines():
